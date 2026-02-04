@@ -10,16 +10,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
+      - name: Download OWASP Dependency-Check
+        run: |
+          wget https://github.com/jeremylong/DependencyCheck/releases/download/v9.0.7/dependency-check-9.0.7-release.zip
+          unzip dependency-check-9.0.7-release.zip
 
       - name: Run OWASP Dependency-Check
-        uses: dependency-check/Dependency-Check_Action@v3.0.2
-        with:
-          project: "my-secure-app"
-          path: "."
-          format: "HTML"
-          out: "dependency-check-report"
+        run: |
+          ./dependency-check/bin/dependency-check.sh \
+            --project "my-secure-app" \
+            --scan . \
+            --format HTML \
+            --out dependency-check-report
 
       - name: Upload Dependency-Check Report
         uses: actions/upload-artifact@v4
