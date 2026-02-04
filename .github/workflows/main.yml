@@ -25,7 +25,7 @@ jobs:
             --scan . \
             --format HTML \
             --out dependency-check-report \
-            --disableNvd \
+            --noupdate \
             --failOnCVSS 7
 
       - name: Upload Dependency-Check Report
