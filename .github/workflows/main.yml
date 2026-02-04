@@ -10,8 +10,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source code
+      - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Cache Dependency-Check database
+        uses: actions/cache@v4
+        with:
+          path: ~/.dependency-check
+          key: dependency-check-db
 
       - name: Download OWASP Dependency-Check
         run: |
@@ -22,15 +28,21 @@ jobs:
         env:
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         run: |
+          if [ -z "$NVD_API_KEY" ]; then
+            echo "NVD_API_KEY is missing"
+            exit 1
+          fi
+
           ./dependency-check/bin/dependency-check.sh \
             --project "my-secure-app" \
             --scan . \
             --format HTML \
             --out dependency-check-report \
-            --nvdApiKey $NVD_API_KEY \
-            --failOnCVSS 7
+            --nvdApiKey "$NVD_API_KEY" \
+            --failOnCVSS 7 \
+            --enableExperimental
 
-      - name: Upload Dependency-Check Report
+      - name: Upload Dependency-Check report
         uses: actions/upload-artifact@v4
         with:
           name: dependency-check-report
