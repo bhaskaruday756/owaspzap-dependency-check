@@ -13,28 +13,19 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
 
-      - name: Cache Dependency-Check Data
-        uses: actions/cache@v4
-        with:
-          path: ~/.dependency-check
-          key: dependency-check-data
-          restore-keys: dependency-check-data
-
       - name: Download OWASP Dependency-Check
         run: |
           wget https://github.com/jeremylong/DependencyCheck/releases/download/v9.0.7/dependency-check-9.0.7-release.zip
           unzip dependency-check-9.0.7-release.zip
 
-      - name: Run OWASP Dependency-Check
+      - name: Run OWASP Dependency-Check (CI-safe)
         run: |
           ./dependency-check/bin/dependency-check.sh \
             --project "my-secure-app" \
             --scan . \
             --format HTML \
             --out dependency-check-report \
-            --data ~/.dependency-check \
-            --nvdApiKey "${{ secrets.NVD_API_KEY }}" \
-            --nvdApiDelay 6000 \
+            --disableNvd \
             --failOnCVSS 7
 
       - name: Upload Dependency-Check Report
