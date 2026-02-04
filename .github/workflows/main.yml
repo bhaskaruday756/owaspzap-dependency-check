@@ -10,17 +10,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout source code
         uses: actions/checkout@v4
 
-      - name: Run OWASP Dependency-Check (Docker)
+      - name: Run OWASP Dependency-Check using Docker
         env:
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         run: |
           mkdir -p dependency-check-report
 
           docker run --rm \
-            -e NVD_API_KEY="$NVD_API_KEY" \
+            --env NVD_API_KEY="$NVD_API_KEY" \
             -v ${{ github.workspace }}:/src \
             -v dependency-check-data:/usr/share/dependency-check/data \
             owasp/dependency-check:latest \
@@ -28,6 +28,7 @@ jobs:
             --scan /src \
             --format HTML \
             --out /src/dependency-check-report \
+            --nvdApiKey "$NVD_API_KEY" \
             --failOnCVSS 7
 
       - name: Upload Dependency-Check Report
