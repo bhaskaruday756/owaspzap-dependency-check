@@ -18,14 +18,16 @@ jobs:
           wget https://github.com/jeremylong/DependencyCheck/releases/download/v9.0.7/dependency-check-9.0.7-release.zip
           unzip dependency-check-9.0.7-release.zip
 
-      - name: Run OWASP Dependency-Check (CI-safe)
+      - name: Run Dependency-Check
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         run: |
           ./dependency-check/bin/dependency-check.sh \
             --project "my-secure-app" \
             --scan . \
             --format HTML \
             --out dependency-check-report \
-            --noupdate \
+            --nvdApiKey $NVD_API_KEY \
             --failOnCVSS 7
 
       - name: Upload Dependency-Check Report
