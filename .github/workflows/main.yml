@@ -2,50 +2,47 @@ name: OWASP Dependency Check (Docker)
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
   pull_request:
 
 jobs:
   dependency-check:
     runs-on: ubuntu-latest
-
+    
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
-
-      # Ensure report directory exists
-      - name: Create report directory
-        run: mkdir -p dependency-check-report
-
+      
       - name: Run OWASP Dependency-Check using Docker
         continue-on-error: true
         env:
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         run: |
+          mkdir -p dependency-check-report
           docker run --rm \
-            -e JAVA_OPTS="-Xmx2g" \
-            -e NVD_API_KEY="$NVD_API_KEY" \
+            --env NVD_API_KEY="$NVD_API_KEY" \
             -v ${{ github.workspace }}:/src \
             -v dependency-check-data:/usr/share/dependency-check/data \
             owasp/dependency-check:latest \
             --project "my-secure-app" \
             --scan /src \
             --format HTML \
-            --format JSON \
             --out /src/dependency-check-report \
             --nvdApiKey "$NVD_API_KEY" \
-            --disableOssIndex \
-            --failOnCVSS 7 || true
-
-      # Debug (shows whether report was created)
-      - name: List generated files
+            --failOnCVSS 11
+      
+      - name: List generated files (debug)
+        if: always()
         run: |
-          echo "Workspace contents:"
-          ls -R
-
+          echo "=== Contents of dependency-check-report ==="
+          ls -la dependency-check-report/ || echo "Directory not found"
+          echo "=== Looking for HTML files ==="
+          find . -name "*.html" -path "*/dependency-check-report/*"
+      
       - name: Upload Dependency-Check Report
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: dependency-check-report
-          path: dependency-check-report
+          path: dependency-check-report/
           if-no-files-found: warn
