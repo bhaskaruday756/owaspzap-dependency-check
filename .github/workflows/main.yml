@@ -18,15 +18,19 @@ jobs:
         env:
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         run: |
-          mkdir -p dependency-check-report
+          # Create output directory with proper permissions
+          mkdir -p ${{ github.workspace }}/dependency-check-report
+          chmod 777 ${{ github.workspace }}/dependency-check-report
+          
           docker run --rm \
             --env NVD_API_KEY="$NVD_API_KEY" \
-            -v ${{ github.workspace }}:/src \
-            -v dependency-check-data:/usr/share/dependency-check/data \
+            --volume ${{ github.workspace }}:/src:rw \
+            --volume dependency-check-data:/usr/share/dependency-check/data \
             owasp/dependency-check:latest \
             --project "my-secure-app" \
             --scan /src \
             --format HTML \
+            --format JSON \
             --out /src/dependency-check-report \
             --nvdApiKey "$NVD_API_KEY" \
             --failOnCVSS 11
@@ -35,9 +39,9 @@ jobs:
         if: always()
         run: |
           echo "=== Contents of dependency-check-report ==="
-          ls -la dependency-check-report/ || echo "Directory not found"
-          echo "=== Looking for HTML files ==="
-          find . -name "*.html" -path "*/dependency-check-report/*"
+          ls -lah dependency-check-report/ || echo "Directory not found"
+          echo "=== All HTML files ==="
+          find . -name "*.html" -type f
       
       - name: Upload Dependency-Check Report
         uses: actions/upload-artifact@v4
