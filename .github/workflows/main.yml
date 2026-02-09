@@ -8,17 +8,20 @@ on:
 jobs:
   dependency-check:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
-      
+
+      # 🔴 IMPORTANT — Build Maven first so dependencies download
+      - name: Build Maven project
+        run: mvn -B -DskipTests clean install
+
       - name: Run OWASP Dependency-Check using Docker
         continue-on-error: true
         env:
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         run: |
-          # Create output directory with proper permissions
           mkdir -p ${{ github.workspace }}/dependency-check-report
           chmod 777 ${{ github.workspace }}/dependency-check-report
           
@@ -34,7 +37,7 @@ jobs:
             --out /src/dependency-check-report \
             --nvdApiKey "$NVD_API_KEY" \
             --failOnCVSS 11
-      
+
       - name: List generated files (debug)
         if: always()
         run: |
@@ -42,7 +45,7 @@ jobs:
           ls -lah dependency-check-report/ || echo "Directory not found"
           echo "=== All HTML files ==="
           find . -name "*.html" -type f
-      
+
       - name: Upload Dependency-Check Report
         uses: actions/upload-artifact@v4
         if: always()
